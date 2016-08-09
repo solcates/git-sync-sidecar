@@ -51,14 +51,7 @@ var pull = function () {
     })
     git.stderr.on('data', function (data) {
         var output = data.toString("ascii")
-        console.error(data);
-        if (output.indexOf("fatal: destination path '" + targetDir + "' already exists and is not an empty directory") != -1) {
-            // cleanup();
-            return false
-        }
-        if (output.indexOf("Cloning into '" + targetDir + "'...")) {
-            console.log("success");
-        }
+        console.error(output);
     })
     git.on('exit', function (code) {
         // console.log(code);
