@@ -47,7 +47,6 @@ var pull = function () {
 
     git.stdout.on('data', function (data) {
         var output = data.toString("ascii")
-        console.log(output)
     })
     git.stderr.on('data', function (data) {
         var output = data.toString("ascii")
