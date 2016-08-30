@@ -1,11 +1,13 @@
 var fs = require("fs");
-var myUtils = require("./utils");
-const spawn = require('child_process').spawn;
+// var myUtils = require("./utils");
+// const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
+// var NodeGit = require("nodegit");
 
 // Process Env Vars
 var gitURL = process.env["GIT_URL"];
 var targetDir = process.env["TARGET_DIR"];
-var ssh_key_path = process.env["SSH_KEY_PATH"] || "~/.ssh/id_rsa";
+var ssh_key_path = process.env["SSH_KEY_PATH"] || "/root/.ssh/id_rsa";
 var ssh_key_data = process.env["SSH_KEY_DATA"] || null;
 
 if (!gitURL) {
@@ -16,58 +18,82 @@ if (!targetDir) {
     console.error("You have to give a targeted directory to pull to...")
 }
 
+// Process ssh key if needed
 
-// Checkout via git to your location of choice.
-
-
-var clone = function () {
-    const git = spawn('git', ['clone', gitURL, targetDir]);
-    git.stdout.on('data', function (data) {
-        var output = data.toString("ascii")
-        console.log(output);
-    })
-    git.stderr.on('data', function (data) {
-        var output = data.toString("ascii")
-
-        if (output.indexOf("fatal: destination path '" + targetDir + "' already exists and is not an empty directory") != -1) {
-            // cleanup();
-            return false
-        }
-        if (output.indexOf("Cloning into '" + targetDir + "'...")) {
-            console.log("success");
-        }
-    })
-    git.on('exit', function (code) {
-        console.log(code);
-    })
+if (ssh_key_data) {
+    // fs.mkdirSync("/root/.ssh")
+    exec("mkdir -p /root/.ssh");
+    const buf = Buffer.from(ssh_key_data, "base64")
+    fs.writeFileSync(ssh_key_path, buf);
+    fs.chmodSync(ssh_key_path, 0600);
+    exec("ssh-keygen -y -f /root/.ssh/id_rsa > /root/.ssh/id_rsa.pub")
 }
+console.log("testing")
+var gitSync = require('git-sync')
 
-var pull = function () {
-    const git = spawn('git', ['pull'], {cwd: targetDir});
+var cronJob = gitSync({
+    remoteUrl: 'https://github.com/holodex/git-sync',
+    localDir:  '/tmp/dir',
+    branch: 'master',
+    cronTime: '* */15 * * * *'
+}, function (err, commit) {
+    console.log(err, commit.id())
+})
 
-    git.stdout.on('data', function (data) {
-        var output = data.toString("ascii")
-    })
-    git.stderr.on('data', function (data) {
-        var output = data.toString("ascii")
-        console.error(output);
-    })
-    git.on('exit', function (code) {
-        // console.log(code);
-    })
+//
+//
+// var repository
+//
+// var pull = function () {
+//     NodeGit.Repository.open(targetDir)
+//         .then(function (repo) {
+//             repository = repo;
+//
+//             return repository.fetchAll({
+//                 callbacks: {
+//                     credentials: function (url, userName) {
+//                         // return NodeGit.Cred.sshKeyFromAgent(userName);
+//                         return NodeGit.Cred.sshKeyNew(userName,"/root/.ssh/id_rsa.pub","/root/.ssh/id_rsa","")
+//
+//                     },
+//                     certificateCheck: function () {
+//                         return 1;
+//                     }
+//                 }
+//             });
+//         })
+//         .done(function (t) {
+//             console.log("Fetched the latest")
+//             setTimeout(pull, 5000)
+//         })
+//
+//
+// }
+//
+// var clone = function () {
+//     var cloneOptions = {};
+//     cloneOptions.fetchOpts = {
+//         callbacks: {
+//             certificateCheck: function () {
+//                 return 1;
+//             },
+//
+//             credentials: function (gitURL, userName) {
+//                 return NodeGit.Cred.sshKeyNew(userName,"/root/.ssh/id_rsa.pub","/root/.ssh/id_rsa","")
+//             }
+//         }
+//     };
+//
+//     var cloneRepository = NodeGit.Clone(gitURL, targetDir, cloneOptions);
+//     var errorAndAttemptOpen = function (t) {
+//         console.log(t)
+//         return NodeGit.Repository.open(targetDir);
+//     };
+//     cloneRepository.catch(errorAndAttemptOpen).then(function (repo) {
+//         console.log("Initial")
+//         pull();
+//     })
+// }
+//
+// clone()
 
-    setTimeout(pull, 5000);
-}
-
-var cleanup = function () {
-    myUtils.deleteFolderRecursive(targetDir);
-}
-var t = fs.statSync(targetDir)
-if (t.isDirectory()) {
-    console.log("Repo already cloned... no need to clone again... starting pull worker")
-    // TODO: Pull
-    pull();
-} else {
-    console.log("Repo needs cloning... stand by...")
-    clone();
-}

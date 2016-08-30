@@ -1,0 +1,30 @@
+{
+  "name": "git-sync-sidecar",
+  "version": "1.0.0",
+  "description": "Sidecar Docker container for keeping a checked out repo up to date.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solcates/git-sync-sidecar.git"
+  },
+  "keywords": [
+    "git",
+    "sync",
+    "docker",
+    "gitsync",
+    "sidecar"
+  ],
+  "author": "Sol Cates <solcates@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/solcates/git-sync-sidecar/issues"
+  },
+  "homepage": "https://github.com/solcates/git-sync-sidecar#readme",
+  "dependencies": {
+    "forever": "^0.15.2",
+    "git-sync": "^1.1.1"
+  }
+}
